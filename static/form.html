@@ -3,20 +3,21 @@
 <head>
     <title>Web Form</title>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 <header>
     <center>
-        <b>Admin Contact Form.</b>
+        <p><b>Admin Contact Form.</b></p>
     </center>
 </header>
-<body>
-<div class="container">
-    <form action="submit_form">
+<body style="background-color:powderblue;">
+<div class="container p-3 mb-2 bg-light text-dark rounded">
+    <form action="submit_form" method="post">
         <div class="form-group">
             <label for="InputEmail">My email address:</label>
-            <input type="email" class="form-control" id="InputEmail" aria-describedby="emailHelp"
+            <input type="email" class="form-control" name="email" id="InputEmail" aria-describedby="emailHelp"
                    placeholder="Enter email" required>
             <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
         </div>
