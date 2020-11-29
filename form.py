@@ -14,46 +14,64 @@ cherrypy.config.update({'log.screen': False,
                         'log.access_file': ''})
 
 
-class WebForm(object):
+class WebForm:
     @cherrypy.expose
     def index(self):
-        with open('static/form.html') as html:
-            return html.read()
+        with open('static/form.html') as file_data:
+            html = file_data.read()
+        return html
 
     @cherrypy.expose
-    def submit_form(self, name, email, ran_commands, produced_output, screenshot, expected, os_type, has_root):
+    def submit_page(self, name, email, ran_commands, produced_output, screenshot, expected, os_type, has_root):
+        with open('static/submitted_form.html') as file_data:
+            html = file_data.read()
+        backend = Backend(name, email, ran_commands, produced_output, screenshot, expected, os_type, has_root)
+        backend.write_to_db()
+        backend.save_screenshot()
+        return html
 
+
+class Backend:
+    cur_time = datetime.datetime.now()
+
+    def __init__(self, name, email, ran_commands, produced_output, screenshot, expected, os_type, has_root):
+        self.name = name
+        self.email = email
+        self.ran_commands = ran_commands
+        self.produced_output = produced_output
+        self.screenshot = screenshot
+        self.expected = expected
+        self.os_type = os_type
+        self.has_root = has_root
         # Make a filename and path
-        upload_path = os.path.dirname(SCREENSHOTS_DIR)
-        file_extension = os.path.splitext(screenshot.filename)[1]
-        cur_time = datetime.datetime.now()
-        upload_new_filename = 'screenshot_'+cur_time.strftime("%Y-%m-%d_%H-%M-%S")+file_extension
-        upload_file = os.path.normpath(os.path.join(upload_path, upload_new_filename))
+        self.upload_path = os.path.dirname(SCREENSHOTS_DIR)
+        self.file_extension = os.path.splitext(screenshot.filename)[1]
+        self.upload_new_filename = 'screenshot_' + self.cur_time.strftime("%Y-%m-%d_%H-%M-%S") + self.file_extension
+        self.upload_file = os.path.normpath(os.path.join(self.upload_path, self.upload_new_filename))
 
-        # Write form data to the DB
-        values = (name, email, ran_commands, produced_output, expected, os_type, has_root, screenshot.filename,
-                  upload_new_filename)
+    def write_to_db(self):
+        values = (self.name, self.email, self.ran_commands, self.produced_output,
+                  self.expected, self.os_type, self.has_root, self.screenshot.filename,
+                  self.upload_new_filename)
         db = sqlite3.connect(PATH_TO_DB)
         curr_db_conn = db.cursor()
         curr_db_conn.execute("INSERT INTO form_log (name, email, ran_commands, produced_output, expected, os_type, \
-                has_root, original_screenshot_filename, new_screenshot_filename) \
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", values)
+                        has_root, original_screenshot_filename, new_screenshot_filename) \
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", values)
         db.commit()
         db.close()
 
-        # Write file to local storage
+    def save_screenshot(self):
         size = 0
-        with open(upload_file, 'wb') as out:
+        with open(self.upload_file, 'wb') as out:
             while True:
-                data = screenshot.file.read(8192)
+                data = self.screenshot.file.read(8192)
                 if not data:
                     break
                 out.write(data)
                 size += len(data)
-        cherrypy.log(f'File {screenshot.filename} uploaded as {upload_new_filename}, size: {size}, \
-type: {screenshot.content_type}.')
-        with open('static/submitted_form.html') as html:
-            return html.read()
+        cherrypy.log(f'File {self.screenshot.filename} uploaded as {self.upload_new_filename}, size: {size}, \
+type: {self.screenshot.content_type}.')
 
 
 my_form = WebForm()
