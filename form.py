@@ -3,6 +3,12 @@ import sqlite3
 import os
 import datetime
 
+
+# Define constants
+SCREENSHOTS_DIR = 'screenshots/'
+PATH_TO_DB = 'db.db'
+PATH_TO_CONFIG = 'form.conf'
+
 cherrypy.config.update({'log.screen': False,
                         'log.error_file': 'app.log',
                         'log.access_file': ''})
@@ -16,8 +22,9 @@ class WebForm(object):
 
     @cherrypy.expose
     def submit_form(self, name, email, ran_commands, produced_output, screenshot, expected, os_type, has_root):
+
         # Make a filename and path
-        upload_path = os.path.dirname('screenshots/')
+        upload_path = os.path.dirname(SCREENSHOTS_DIR)
         file_extension = os.path.splitext(screenshot.filename)[1]
         cur_time = datetime.datetime.now()
         upload_new_filename = 'screenshot_'+cur_time.strftime("%Y-%m-%d_%H-%M-%S")+file_extension
@@ -26,7 +33,7 @@ class WebForm(object):
         # Write form data to the DB
         values = (name, email, ran_commands, produced_output, expected, os_type, has_root, screenshot.filename,
                   upload_new_filename)
-        db = sqlite3.connect("db.db")
+        db = sqlite3.connect(PATH_TO_DB)
         curr_db_conn = db.cursor()
         curr_db_conn.execute("INSERT INTO form_log (name, email, ran_commands, produced_output, expected, os_type, \
                 has_root, original_screenshot_filename, new_screenshot_filename) \
@@ -53,4 +60,4 @@ my_form = WebForm()
 
 
 if __name__ == '__main__':
-    cherrypy.quickstart(my_form, '/', 'form.conf')
+    cherrypy.quickstart(my_form, '/', PATH_TO_CONFIG)
