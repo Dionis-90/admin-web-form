@@ -1,0 +1,5 @@
+[general]
+server.socket_port: 8080
+
+[/]
+

@@ -1,6 +1,3 @@
-#!/usr/bin/env python3.7
-# -*- coding: utf-8 -*-
-
 import cherrypy
 import sqlite3
 import os
@@ -14,7 +11,7 @@ cherrypy.config.update({'log.screen': False,
 class WebForm(object):
     @cherrypy.expose
     def index(self):
-        with open('static/form.html', encoding="utf-8") as html:
+        with open('static/form.html') as html:
             return html.read()
 
     @cherrypy.expose
@@ -26,7 +23,7 @@ class WebForm(object):
         upload_new_filename = 'screenshot_'+cur_time.strftime("%Y-%m-%d_%H-%M-%S")+file_extension
         upload_file = os.path.normpath(os.path.join(upload_path, upload_new_filename))
 
-        # Write to DB
+        # Write form data to the DB
         values = (name, email, ran_commands, produced_output, expected, os_type, has_root, screenshot.filename,
                   upload_new_filename)
         db = sqlite3.connect("db.db")
@@ -37,6 +34,7 @@ class WebForm(object):
         db.commit()
         db.close()
 
+        # Write file to local storage
         size = 0
         with open(upload_file, 'wb') as out:
             while True:
@@ -48,7 +46,7 @@ class WebForm(object):
         cherrypy.log(f'File {screenshot.filename} uploaded as {upload_new_filename}, size: {size}, \
 type: {screenshot.content_type}.')
         with open('static/submitted_form.html') as html:
-            return f"{html.read()}"
+            return html.read()
 
 
 my_form = WebForm()
