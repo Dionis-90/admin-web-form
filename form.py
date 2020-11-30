@@ -22,30 +22,29 @@ class WebForm:
         return html
 
     @cherrypy.expose
-    def submit_page(self, name, email, ran_commands, produced_output, screenshot, expected, os_type, has_root):
+    def submit_page(self, **form_data):
         with open('static/submitted_form.html') as file_data:
             html = file_data.read()
-        backend = Backend(name, email, ran_commands, produced_output, screenshot, expected, os_type, has_root)
+        backend = Backend(form_data)
         backend.write_to_db()
         backend.save_screenshot()
         return html
 
 
 class Backend:
-    cur_time = datetime.datetime.now()
-
-    def __init__(self, name, email, ran_commands, produced_output, screenshot, expected, os_type, has_root):
-        self.name = name
-        self.email = email
-        self.ran_commands = ran_commands
-        self.produced_output = produced_output
-        self.screenshot = screenshot
-        self.expected = expected
-        self.os_type = os_type
-        self.has_root = has_root
+    def __init__(self, form_data):
+        self.name = form_data['name']
+        self.email = form_data['email']
+        self.ran_commands = form_data['ran_commands']
+        self.produced_output = form_data['produced_output']
+        self.screenshot = form_data['screenshot']
+        self.expected = form_data['expected']
+        self.os_type = form_data['os_type']
+        self.has_root = form_data['has_root']
+        self.cur_time = datetime.datetime.now()
         # Make a filename and path
         self.upload_path = os.path.dirname(SCREENSHOTS_DIR)
-        self.file_extension = os.path.splitext(screenshot.filename)[1]
+        self.file_extension = os.path.splitext(self.screenshot.filename)[1]
         self.upload_new_filename = 'screenshot_' + self.cur_time.strftime("%Y-%m-%d_%H-%M-%S") + self.file_extension
         self.upload_file = os.path.normpath(os.path.join(self.upload_path, self.upload_new_filename))
 
