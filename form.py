@@ -4,11 +4,11 @@ import os
 import datetime
 import smtplib
 import base64
+import ssl
+from settings import *
 
 
 # Define constants
-SCREENSHOTS_DIR = 'screenshots/'
-PATH_TO_DB = 'db.db'
 PATH_TO_CONFIG = 'form.conf'
 
 cherrypy.config.update({'log.screen': False,
@@ -30,7 +30,7 @@ class WebForm:
         backend = Backend(form_data)
         backend.write_to_db()
         backend.save_screenshot()
-        backend.send_email()  # Test mode
+        backend.send_email_smtp()  # Test mode
         return html
 
 
@@ -75,50 +75,40 @@ class Backend:
         cherrypy.log(f'File {self.screenshot.filename} uploaded as {self.new_filename}, size: {size}, \
 type: {self.screenshot.content_type}.')
 
-    def send_email(self):  # Need to test
+    def send_email_smtp(self):  # Need to test
         # Read a file and encode it into base64 format
-        with open(self.new_filename, "rb") as file_data:
+        with open(self.uploaded_file, "rb") as file_data:
             file_content = file_data.read()
         encoded_content = base64.b64encode(file_content)
 
-        sender = 'webform'
-        receiver = 'dionis201290s@gmail.com'
         marker = "Abt4vlRmv"
+        context = ssl.create_default_context()
+        body = 'This is a test email to send an attachment.'
+        message = f"""\
+From: Admin Web Form <{SENDER_ADDRESS}>
+To: <{ADMIN_EMAIL}>
+Subject: Form Submitted
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary={marker}
+--{marker}
+Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
 
-        body = """
-        This is a test email to send an attachment.
-        """
 
-        # Define the main headers.
-        part1 = f"""From: Admin Web Form <{sender}>
-        To: <{receiver}>
-        Subject: Form Submitted
-        MIME-Version: 1.0
-        Content-Type: multipart/mixed; boundary={marker}
-        --{marker}
-        """
+{body}
+--{marker}
+Content-Type: {self.screenshot.content_type}; name=\"{self.new_filename}\"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename={self.new_filename}
 
-        # Define the message action
-        part2 = f"""Content-Type: text/plain
-        Content-Transfer-Encoding:8bit
-
-        {body}
-        --{marker}
-        """
-
-        # Define the attachment section
-        part3 = f"""Content-Type: multipart/mixed; name=\"{self.new_filename}\"
-        Content-Transfer-Encoding:base64
-        Content-Disposition: attachment; filename={self.new_filename}
-
-        {encoded_content}
-        --{marker}--
-        """
-        message = part1 + part2 + part3
+{encoded_content.decode('ascii')}
+--{marker}--
+"""
 
         try:
-            smtp_result = smtplib.SMTP('localhost')
-            smtp_result.sendmail(sender, receiver, message)
+            smtp = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context)
+            smtp.login(SMTP_USER, SMTP_PASSWORD)
+            smtp.sendmail(SMTP_USER, ADMIN_EMAIL, message)
             cherrypy.log("Email sent successfully.")
         except smtplib.SMTPException as e:
             cherrypy.log(f"Error: unable to send email.\n{e}")
@@ -128,4 +118,7 @@ my_form = WebForm()
 
 
 if __name__ == '__main__':
+    if not os.path.exists(SCREENSHOTS_DIR):
+        os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+        cherrypy.log(f"{SCREENSHOTS_DIR} has been created.")
     cherrypy.quickstart(my_form, '/', PATH_TO_CONFIG)
