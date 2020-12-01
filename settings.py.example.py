@@ -1,3 +1,4 @@
+USE_SMTP = False
 SMTP_SERVER = ''
 SMTP_USER = ''
 SMTP_PASSWORD = ''

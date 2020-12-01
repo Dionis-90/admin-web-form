@@ -6,6 +6,7 @@ import smtplib
 import base64
 import ssl
 from settings import *
+from subprocess import Popen, PIPE
 
 
 # Define constants
@@ -104,14 +105,17 @@ Content-Disposition: attachment; filename={self.new_filename}
 {encoded_content.decode('ascii')}
 --{marker}--
 """
-
-        try:
-            smtp = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context)
-            smtp.login(SMTP_USER, SMTP_PASSWORD)
-            smtp.sendmail(SMTP_USER, ADMIN_EMAIL, message)
-            cherrypy.log("Email sent successfully.")
-        except smtplib.SMTPException as e:
-            cherrypy.log(f"Error: unable to send email.\n{e}")
+        if USE_SMTP:
+            try:
+                smtp = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context)
+                smtp.login(SMTP_USER, SMTP_PASSWORD)
+                smtp.sendmail(SMTP_USER, ADMIN_EMAIL, message)
+                cherrypy.log("Email sent successfully.")
+            except smtplib.SMTPException as e:
+                cherrypy.log(f"Error: unable to send email.\n{e}")
+            else:
+                pipe = Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=PIPE)
+                pipe.communicate(message.encode())
 
 
 my_form = WebForm()
