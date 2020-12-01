@@ -31,7 +31,7 @@ class WebForm:
         backend = Backend(form_data)
         backend.write_to_db()
         backend.save_screenshot()
-        backend.send_email_smtp()  # Test mode
+        backend.send_email()
         return html
 
 
@@ -46,7 +46,6 @@ class Backend:
         self.os_type = form_data['os_type']
         self.has_root = form_data['has_root']
         self.cur_time = datetime.datetime.now()
-        # Make a filename and path
         self.upload_path = os.path.dirname(SCREENSHOTS_DIR)
         self.file_extension = os.path.splitext(self.screenshot.filename)[1]
         self.new_filename = 'screenshot_' + self.cur_time.strftime("%Y-%m-%d_%H-%M-%S") + self.file_extension
@@ -73,11 +72,10 @@ class Backend:
                     break
                 out.write(data)
                 size += len(data)
-        cherrypy.log(f'File {self.screenshot.filename} uploaded as {self.new_filename}, size: {size}, \
-type: {self.screenshot.content_type}.')
+        cherrypy.log(f'File {self.screenshot.filename} uploaded as {self.new_filename}, size: {size}, '
+                     f'type: {self.screenshot.content_type}.')
 
-    def send_email_smtp(self):  # Need to test
-        # Read a file and encode it into base64 format
+    def send_email(self):
         with open(self.uploaded_file, "rb") as file_data:
             file_content = file_data.read()
         encoded_content = base64.b64encode(file_content)
@@ -123,11 +121,8 @@ Content-Disposition: attachment; filename={self.new_filename}
                 cherrypy.log(f"Error: unable to send email.\n{e}\nReturns code is {pipe.returncode}.")
 
 
-my_form = WebForm()
-
-
 if __name__ == '__main__':
     if not os.path.exists(SCREENSHOTS_DIR):
         os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
         cherrypy.log(f"{SCREENSHOTS_DIR} has been created.")
-    cherrypy.quickstart(my_form, '/', PATH_TO_CONFIG)
+    cherrypy.quickstart(WebForm(), '/', PATH_TO_CONFIG)
