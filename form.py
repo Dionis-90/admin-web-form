@@ -113,13 +113,13 @@ Content-Disposition: attachment; filename={self.new_filename}
                 cherrypy.log("Email sent successfully.")
             except smtplib.SMTPException as e:
                 cherrypy.log(f"Error: unable to send email.\n{e}")
-            else:
-                try:
-                    pipe = subprocess.Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=subprocess.PIPE)
-                    pipe_return = pipe.communicate(message.encode())
-                    cherrypy.log(pipe_return)
-                except subprocess.CalledProcessError as e:
-                    cherrypy.log(f"Error: unable to send email.\n{e}")
+        else:
+            cherrypy.log("Using unix sendmail script.")
+            try:
+                pipe = subprocess.Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=subprocess.PIPE)
+                pipe_returns = pipe.communicate(message.encode())
+            except subprocess.CalledProcessError as e:
+                cherrypy.log(f"Error: unable to send email.\n{e}.\nPipe returns: {pipe_returns}, return code is {pipe.returncode}.")
 
 
 my_form = WebForm()
