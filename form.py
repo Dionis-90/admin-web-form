@@ -112,13 +112,16 @@ Content-Disposition: attachment; filename={self.new_filename}
                 cherrypy.log("Email sent successfully.")
             except smtplib.SMTPException as e:
                 cherrypy.log(f"Error: unable to send email.\n{e}")
-        else:
+        elif os.path.exists("/usr/sbin/sendmail"):
             cherrypy.log("Using Unix sendmail script.")
             pipe = subprocess.Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=subprocess.PIPE)
             try:
-                pipe.communicate(message.encode())
+                pipe_output = pipe.communicate(message.encode())
+                cherrypy.log(pipe_output)
             except subprocess.CalledProcessError as e:
                 cherrypy.log(f"Error: unable to send email.\n{e}\nReturns code is {pipe.returncode}.")
+        else:
+            cherrypy.log("Unable to send email. Please set smtp credentials in the config.")
 
 
 if __name__ == '__main__':
