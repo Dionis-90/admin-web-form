@@ -14,7 +14,9 @@ PATH_TO_CONFIG = 'form.conf'
 
 cherrypy.config.update({'log.screen': False,
                         'log.error_file': 'app.log',
-                        'log.access_file': ''})
+                        'log.access_file': '',
+                        'tools.encode.encoding': 'utf-8',
+                        'tools.decode.on': True})
 
 
 class WebForm:
@@ -29,7 +31,7 @@ class WebForm:
         with open('static/submitted_form.html') as file_data:
             html = file_data.read()
         backend = Backend(form_data)
-        # backend.write_to_db()
+        # backend.write_to_db()  Temporary disabled.
         backend.save_screenshot()
         backend.send_email()
         return html
@@ -78,17 +80,18 @@ class Backend:
     def send_email(self):
         with open(self.uploaded_file, "rb") as file_data:
             file_content = file_data.read()
+
+        # There name is used in the email_template.
         encoded_content = base64.b64encode(file_content)
-        marker = "Abt4vlRmv"
-        context = ssl.create_default_context()
-        body = 'This is a test email to send an attachment.'
-        with open("email_template.txt") as file_data:
+
+        with open("email_template.py") as file_data:
             email_template_text = file_data.read()
-        email_template = compile(email_template_text, 'email_template.txt', 'eval')
+        email_template = compile(email_template_text, 'email_template.py', 'eval')
         message = eval(email_template)
 
         if USE_SMTP:
             cherrypy.log("Using smtp credentials.")
+            context = ssl.create_default_context()
             try:
                 smtp = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context)
                 smtp.login(SMTP_USER, SMTP_PASSWORD)
