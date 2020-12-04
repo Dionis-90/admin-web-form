@@ -29,7 +29,7 @@ class WebForm:
         with open('static/submitted_form.html') as file_data:
             html = file_data.read()
         backend = Backend(form_data)
-        backend.write_to_db()
+        # backend.write_to_db()
         backend.save_screenshot()
         backend.send_email()
         return html
@@ -79,30 +79,14 @@ class Backend:
         with open(self.uploaded_file, "rb") as file_data:
             file_content = file_data.read()
         encoded_content = base64.b64encode(file_content)
-
         marker = "Abt4vlRmv"
         context = ssl.create_default_context()
         body = 'This is a test email to send an attachment.'
-        message = f"""\
-From: Admin Web Form <{SENDER_ADDRESS}>
-To: <{ADMIN_EMAIL}>
-Subject: Form Submitted
-MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary={marker}
---{marker}
-Content-Type: text/plain
-Content-Transfer-Encoding: 8bit
+        with open("email_template.txt") as file_data:
+            email_template_text = file_data.read()
+        email_template = compile(email_template_text, 'email_template.txt', 'eval')
+        message = eval(email_template)
 
-
-{body}
---{marker}
-Content-Type: {self.screenshot.content_type}; name=\"{self.new_filename}\"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename={self.new_filename}
-
-{encoded_content.decode('ascii')}
---{marker}--
-"""
         if USE_SMTP:
             cherrypy.log("Using smtp credentials.")
             try:
@@ -114,10 +98,12 @@ Content-Disposition: attachment; filename={self.new_filename}
                 cherrypy.log(f"Error: unable to send email.\n{e}")
         elif os.path.exists("/usr/sbin/sendmail"):
             cherrypy.log("Using Unix sendmail script.")
-            pipe = subprocess.Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=subprocess.PIPE)
+            pipe = subprocess.Popen(["/usr/sbin/sendmail", "-t", "-oi"], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
             try:
-                pipe_output = pipe.communicate(message.encode())
-                cherrypy.log(pipe_output)
+                pipe_response = pipe.communicate(message.encode())
+                if pipe.returncode != 0:
+                    cherrypy.log(f"Sending email failed. Response from subprocess pipeline: "
+                                 f"{pipe_response[1]}. Pipeline returns code: {pipe.returncode}.")
             except subprocess.CalledProcessError as e:
                 cherrypy.log(f"Error: unable to send email.\n{e}\nReturns code is {pipe.returncode}.")
         else:
