@@ -8,15 +8,9 @@ import ssl
 from settings import *
 import subprocess
 
-
-# Define constants
-PATH_TO_CONFIG = 'form.conf'
-
 cherrypy.config.update({'log.screen': False,
                         'log.error_file': 'app.log',
-                        'log.access_file': '',
-                        'tools.encode.encoding': 'utf-8',
-                        'tools.decode.on': True})
+                        'log.access_file': ''})
 
 
 class WebForm:
@@ -31,9 +25,9 @@ class WebForm:
         with open('static/submitted_form.html') as file_data:
             html = file_data.read()
         backend = Backend(form_data)
-        # backend.write_to_db()  Temporary disabled.
+        backend.write_to_db()
         backend.save_screenshot()
-        backend.send_email()
+        # backend.send_email()  Temporary disabled.
         return html
 
 
@@ -74,8 +68,8 @@ class Backend:
                     break
                 out.write(data)
                 size += len(data)
-        cherrypy.log(f'File {self.screenshot.filename} uploaded as {self.new_filename}, size: {size}, '
-                     f'type: {self.screenshot.content_type}.')
+        cherrypy.log(f"File {self.screenshot.filename} uploaded as {self.new_filename}, size: {size}, "
+                     f"type: {self.screenshot.content_type}.")
 
     def send_email(self):
         with open(self.uploaded_file, "rb") as file_data:

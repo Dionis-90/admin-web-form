@@ -9,3 +9,5 @@ EMAIL_MARKER = "RandomValueString"
 SCREENSHOTS_DIR = 'screenshots/'
 PATH_TO_DB = 'db.db'
 ADMIN_EMAIL = 'dionis201290@gmail.com'
+
+PATH_TO_CONFIG = 'form.conf'
