@@ -27,7 +27,7 @@ class WebForm:
         backend = Backend(form_data)
         backend.write_to_db()
         backend.save_screenshot()
-        # backend.send_email()  Temporary disabled.
+        backend.send_email()
         return html
 
 
@@ -42,6 +42,7 @@ class Backend:
         self.os_type = form_data['os_type']
         self.has_root = form_data['has_root']
         self.screenshot_filename = self.screenshot.filename.encode('iso-8859-1').decode('utf-8')
+        # self.screenshot_filename = self.screenshot.filename
         self.cur_time = datetime.datetime.now()
         self.upload_path = os.path.dirname(SCREENSHOTS_DIR)
         self.file_extension = os.path.splitext(self.screenshot.filename)[1]
@@ -75,20 +76,18 @@ class Backend:
     def send_email(self):
         with open(self.uploaded_file, "rb") as file_data:
             file_content = file_data.read()
+        screenshot_in_base64 = base64.b64encode(file_content).decode('ascii')  # Uses in the email_template.
 
-        # There name is used in the email_template.
-        encoded_content = base64.b64encode(file_content)
-
-        with open("email_template.py") as file_data:
+        with open("email_template.txt") as file_data:
             email_template_text = file_data.read()
-        email_template = compile(email_template_text, 'email_template.py', 'eval')
+        email_template = compile(email_template_text, 'email_template.txt', 'eval')
         message = eval(email_template)
 
         if USE_SMTP:
             cherrypy.log("Using smtp credentials.")
-            context = ssl.create_default_context()
+            ssl_context = ssl.create_default_context()
             try:
-                smtp = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=context)
+                smtp = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=ssl_context)
                 smtp.login(SMTP_USER, SMTP_PASSWORD)
                 smtp.sendmail(SMTP_USER, ADMIN_EMAIL, message)
                 cherrypy.log("Email sent successfully.")

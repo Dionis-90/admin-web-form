@@ -21,6 +21,6 @@ Content-Type: {self.screenshot.content_type}; name=\"{self.new_filename}\"
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename={self.new_filename}
 
-{encoded_content.decode('ascii')}
+{screenshot_in_base64}
 --{EMAIL_MARKER}--
 """
