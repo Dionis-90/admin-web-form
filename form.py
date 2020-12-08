@@ -111,4 +111,4 @@ if __name__ == '__main__':
     if not os.path.exists(SCREENSHOTS_DIR):
         os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
         cherrypy.log(f"{SCREENSHOTS_DIR} has been created.")
-    cherrypy.quickstart(WebForm(), '/', PATH_TO_CONFIG)
+    cherrypy.quickstart(WebForm(), '/', PATH_TO_APP_CONFIG)
