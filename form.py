@@ -41,6 +41,7 @@ class Backend:
         self.expected = form_data['expected']
         self.os_type = form_data['os_type']
         self.has_root = form_data['has_root']
+        self.screenshot_filename = self.screenshot.filename.encode('iso-8859-1').decode('utf-8')
         self.cur_time = datetime.datetime.now()
         self.upload_path = os.path.dirname(SCREENSHOTS_DIR)
         self.file_extension = os.path.splitext(self.screenshot.filename)[1]
@@ -49,7 +50,7 @@ class Backend:
 
     def write_to_db(self):
         values = (self.name, self.email, self.ran_commands, self.produced_output,
-                  self.expected, self.os_type, self.has_root, self.screenshot.filename,
+                  self.expected, self.os_type, self.has_root, self.screenshot_filename,
                   self.new_filename)
         db = sqlite3.connect(PATH_TO_DB)
         curr_db_conn = db.cursor()
@@ -68,7 +69,7 @@ class Backend:
                     break
                 out.write(data)
                 size += len(data)
-        cherrypy.log(f"File {self.screenshot.filename} uploaded as {self.new_filename}, size: {size}, "
+        cherrypy.log(f"File uploaded as {self.new_filename}, size: {size}, "
                      f"type: {self.screenshot.content_type}.")
 
     def send_email(self):
