@@ -1,26 +1,25 @@
-f"""From: Admin Web Form <{SENDER_ADDRESS}>
-To: <{ADMIN_EMAIL}>
-Subject: Form Submitted
+From: {sender_name} <{sender_address}>
+To: <{admin_email}>
+Subject: {subject}
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary={EMAIL_MARKER}
+Content-Type: multipart/mixed; boundary={marker}
 
---{EMAIL_MARKER}
+--{marker}
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 
-Name: {self.name}
-Email: {self.email}
-Ran command: {self.ran_commands}
-Produced output: {self.produced_output}
-Expected: {self.expected}
-OS: {self.os_type}
-Has root access: {self.has_root}
+Name: {name}
+Email: {email}
+Ran command: {ran_commands}
+Produced output: {produced_output}
+Expected: {expected}
+OS: {os_type}
+Has root access: {has_root}
 
---{EMAIL_MARKER}
-Content-Type: {self.screenshot.content_type}; name=\"{self.new_filename}\"
+--{marker}
+Content-Type: {screenshot_content_type}; name="{filename}"
 Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename={self.new_filename}
+Content-Disposition: attachment; filename={filename}
 
-{screenshot_in_base64}
---{EMAIL_MARKER}--
-"""
+{base64_file_data}
+--{marker}--

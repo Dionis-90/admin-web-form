@@ -42,7 +42,6 @@ class Backend:
         self.os_type = form_data['os_type']
         self.has_root = form_data['has_root']
         self.screenshot_filename = self.screenshot.filename.encode('iso-8859-1').decode('utf-8')
-        # self.screenshot_filename = self.screenshot.filename
         self.cur_time = datetime.datetime.now()
         self.upload_path = os.path.dirname(SCREENSHOTS_DIR)
         self.file_extension = os.path.splitext(self.screenshot.filename)[1]
@@ -80,8 +79,15 @@ class Backend:
 
         with open("email_template.txt") as file_data:
             email_template_text = file_data.read()
-        email_template = compile(email_template_text, 'email_template.txt', 'eval')
-        message = eval(email_template)
+        message = email_template_text.format(sender_address=SENDER_ADDRESS, admin_email=ADMIN_EMAIL,
+                                             marker=EMAIL_MARKER,
+                                             base64_file_data=screenshot_in_base64, name=self.name,
+                                             email=self.email, ran_commands=self.ran_commands,
+                                             produced_output=self.produced_output, expected=self.expected,
+                                             os_type=self.os_type, has_root=self.has_root,
+                                             screenshot_content_type=self.screenshot.content_type,
+                                             filename=self.new_filename,
+                                             sender_name=SENDER_NAME, subject=SUBJECT, )
 
         if USE_SMTP:
             cherrypy.log("Using smtp credentials.")
