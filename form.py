@@ -24,7 +24,7 @@ class WebForm:
     def submit_page(self, **form_data):
         with open('static/submitted_form.html') as file_data:
             html = file_data.read()
-        backend = Backend(form_data)
+        backend = Backend(cherrypy.request.remote.ip, form_data)
         backend.write_to_db()
         backend.save_screenshot()
         backend.send_email()
@@ -32,7 +32,7 @@ class WebForm:
 
 
 class Backend:
-    def __init__(self, form_data):
+    def __init__(self, client_ip_addr, form_data):
         self.name = form_data['name']
         self.email = form_data['email']
         self.ran_commands = form_data['ran_commands']
@@ -42,53 +42,49 @@ class Backend:
         self.os_type = form_data['os_type']
         self.has_root = form_data['has_root']
         self.screenshot_filename = self.screenshot.filename.encode('iso-8859-1').decode('utf-8')
-        self.cur_time = datetime.datetime.now()
-        self.upload_path = os.path.dirname(SCREENSHOTS_DIR)
-        self.file_extension = os.path.splitext(self.screenshot.filename)[1]
-        self.new_filename = 'screenshot_' + self.cur_time.strftime("%Y-%m-%d_%H-%M-%S") + self.file_extension
-        self.uploaded_file = os.path.normpath(os.path.join(self.upload_path, self.new_filename))
+        cur_time = datetime.datetime.now()
+        uploading_dir = os.path.dirname(SCREENSHOTS_DIR)
+        screenshot_file_extension = os.path.splitext(self.screenshot.filename)[1]
+        self.new_screenshot_filename = 'screenshot_'+cur_time.strftime("%Y-%m-%d_%H-%M-%S")+screenshot_file_extension
+        self.screenshot_file_path = os.path.normpath(os.path.join(uploading_dir, self.new_screenshot_filename))
+        self.client_ip_addr = client_ip_addr
 
     def write_to_db(self):
         values = (self.name, self.email, self.ran_commands, self.produced_output,
                   self.expected, self.os_type, self.has_root, self.screenshot_filename,
-                  self.new_filename)
+                  self.new_screenshot_filename, self.client_ip_addr,)
         db = sqlite3.connect(PATH_TO_DB)
         curr_db_conn = db.cursor()
         curr_db_conn.execute("INSERT INTO form_log (name, email, ran_commands, produced_output, expected, os_type, \
-                        has_root, original_screenshot_filename, new_screenshot_filename) \
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", values)
+                        has_root, original_screenshot_filename, new_screenshot_filename, client_ip_addr) \
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", values)
         db.commit()
         db.close()
 
     def save_screenshot(self):
         size = 0
-        with open(self.uploaded_file, 'wb') as out:
+        with open(self.screenshot_file_path, 'wb') as out:
             while True:
                 data = self.screenshot.file.read(8192)
                 if not data:
                     break
                 out.write(data)
                 size += len(data)
-        cherrypy.log(f"File uploaded as {self.new_filename}, size: {size}, "
+        cherrypy.log(f"File uploaded as {self.new_screenshot_filename}, size: {size}, "
                      f"type: {self.screenshot.content_type}.")
 
     def send_email(self):
-        with open(self.uploaded_file, "rb") as file_data:
+        with open(self.screenshot_file_path, "rb") as file_data:
             file_content = file_data.read()
-        screenshot_in_base64 = base64.b64encode(file_content).decode('ascii')  # Uses in the email_template.
-
+        screenshot_in_base64 = base64.b64encode(file_content).decode('ascii')
         with open("email_template.txt") as file_data:
             email_template_text = file_data.read()
-        message = email_template_text.format(sender_address=SENDER_ADDRESS, admin_email=ADMIN_EMAIL,
-                                             marker=EMAIL_MARKER,
-                                             base64_file_data=screenshot_in_base64, name=self.name,
-                                             email=self.email, ran_commands=self.ran_commands,
-                                             produced_output=self.produced_output, expected=self.expected,
-                                             os_type=self.os_type, has_root=self.has_root,
-                                             screenshot_content_type=self.screenshot.content_type,
-                                             filename=self.new_filename,
-                                             sender_name=SENDER_NAME, subject=SUBJECT, )
-
+        message = email_template_text.format(
+            sender_address=SENDER_ADDRESS, admin_email=ADMIN_EMAIL, marker=EMAIL_MARKER,
+            base64_file_data=screenshot_in_base64, name=self.name, email=self.email, ran_commands=self.ran_commands,
+            produced_output=self.produced_output, expected=self.expected, os_type=self.os_type, has_root=self.has_root,
+            screenshot_content_type=self.screenshot.content_type, filename=self.new_screenshot_filename,
+            sender_name=SENDER_NAME, subject=SUBJECT, client_ip_addr=self.client_ip_addr, )
         if USE_SMTP:
             cherrypy.log("Using smtp credentials.")
             ssl_context = ssl.create_default_context()

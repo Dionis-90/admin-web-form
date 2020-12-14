@@ -15,6 +15,7 @@ Produced output: {produced_output}
 Expected: {expected}
 OS: {os_type}
 Has root access: {has_root}
+Client IP address: {client_ip_addr}
 
 --{marker}
 Content-Type: {screenshot_content_type}; name="{filename}"
