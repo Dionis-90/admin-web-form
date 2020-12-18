@@ -1,6 +1,7 @@
 .idea
 __*__
 *.db
+*.sqlite*
 screenshots
 *.log
 *.conf

@@ -5,8 +5,11 @@ import datetime
 import smtplib
 import base64
 import ssl
-from settings import *
 import subprocess
+import string
+import random
+from settings import *
+
 
 cherrypy.config.update({'log.screen': False,
                         'log.error_file': 'app.log',
@@ -74,13 +77,17 @@ class Backend:
                      f"type: {self.screenshot.content_type}.")
 
     def send_email(self):
+        def generate_marker(length):
+            characters = string.ascii_letters+string.digits
+            email_marker = ''.join(random.choice(characters) for i in range(length))
+            return email_marker
         with open(self.screenshot_file_path, "rb") as file_data:
             file_content = file_data.read()
         screenshot_in_base64 = base64.b64encode(file_content).decode('ascii')
         with open("email_template.txt") as file_data:
             email_template_text = file_data.read()
         message = email_template_text.format(
-            sender_address=SENDER_ADDRESS, admin_email=ADMIN_EMAIL, marker=EMAIL_MARKER,
+            sender_address=SENDER_ADDRESS, admin_email=ADMIN_EMAIL, marker=generate_marker(12),
             base64_file_data=screenshot_in_base64, name=self.name, email=self.email, ran_commands=self.ran_commands,
             produced_output=self.produced_output, expected=self.expected, os_type=self.os_type, has_root=self.has_root,
             screenshot_content_type=self.screenshot.content_type, filename=self.new_screenshot_filename,
