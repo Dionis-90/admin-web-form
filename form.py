@@ -96,7 +96,15 @@ class Backend:
             cherrypy.log("Using smtp credentials.")
             ssl_context = ssl.create_default_context()
             try:
-                smtp = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=ssl_context)
+                if SMTP_USE_SSL:
+                    if SMTP_PORT == 465:
+                        smtp = smtplib.SMTP_SSL(SMTP_SERVER, SMTP_PORT, context=ssl_context)
+                    else:
+                        cherrypy.log("Using StartTLS.")
+                        smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+                        smtp.starttls()
+                else:
+                    smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
                 smtp.login(SMTP_USER, SMTP_PASSWORD)
                 smtp.sendmail(SMTP_USER, ADMIN_EMAIL, message.encode('utf-8'))
                 cherrypy.log("Email sent successfully.")

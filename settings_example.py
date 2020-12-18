@@ -4,7 +4,7 @@ SMTP_SERVER = ''
 SMTP_USER = ''
 SMTP_PASSWORD = ''
 SMTP_USE_SSL = True
-SMTP_PORT = 465  # Supported only 465 port now. TODO: sent via 587 and 25 with starttls or without.
+SMTP_PORT = 587
 
 # Email settings
 SENDER_ADDRESS = 'webform@localhost.localdomain'
