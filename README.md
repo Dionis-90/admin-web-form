@@ -1,5 +1,6 @@
 # Admin-Web-Form
 Simple web-form for system administrators or support engineers.
+Sends form data via email and writes one to the DB Sqlite.
 
 ## Requirements
 - Python3.6 or beyond installed
