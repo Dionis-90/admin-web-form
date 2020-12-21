@@ -1,4 +1,4 @@
-# admin-web-form
+# Admin-Web-Form
 Simple web-form for system administrators or support engineers.
 
 ## Requirements
