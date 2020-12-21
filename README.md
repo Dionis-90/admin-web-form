@@ -38,5 +38,8 @@ server {
 and restart Nginx
 ```nginx -t && service nginx reload```
 
-5. Run application e.g.:
+5. Install requirements:
+```pip3 install cherrypy```
+
+6. Run application e.g.:
 ```python3 form.py &```
