@@ -12,10 +12,10 @@ from settings import *
 
 
 cherrypy.config.update({'log.screen': False,
-                        'log.error_file': 'app.log',
+                        'log.error_file': 'app.log',  # TODO: changeable log filename
                         'log.access_file': '',
                         'tools.proxy.on': True,
-                        'tools.proxy.local': 'Host',})
+                        'tools.proxy.local': 'Host', })
 
 
 class WebForm:
@@ -81,7 +81,7 @@ class Backend:
     def send_email(self):
         def generate_marker(length):
             characters = string.ascii_letters+string.digits
-            email_marker = ''.join(random.choice(characters) for i in range(length))
+            email_marker = ''.join(random.choice(characters) for _ in range(length))
             return email_marker
         with open(self.screenshot_file_path, "rb") as file_data:
             file_content = file_data.read()
