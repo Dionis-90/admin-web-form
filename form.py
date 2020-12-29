@@ -13,7 +13,9 @@ from settings import *
 
 cherrypy.config.update({'log.screen': False,
                         'log.error_file': 'app.log',
-                        'log.access_file': ''})
+                        'log.access_file': '',
+                        'tools.proxy.on': True,
+                        'tools.proxy.local': 'Host',})
 
 
 class WebForm:
