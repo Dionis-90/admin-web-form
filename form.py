@@ -8,6 +8,7 @@ import ssl
 import subprocess
 import string
 import random
+import requests
 from settings import *
 
 
@@ -22,18 +23,26 @@ class WebForm:
     @cherrypy.expose
     def index(self):
         with open('static/form.html') as file_data:
-            html = file_data.read()
+            html_template = file_data.read()
+        html = html_template.format(site_key=RECAPTCHA_SITE_KEY)
         return html
 
     @cherrypy.expose
     def submit_page(self, **form_data):
         with open('static/submitted_form.html') as file_data:
-            html = file_data.read()
+            success_html = file_data.read()
         backend = Backend(cherrypy.request.remote.ip, form_data)
-        backend.write_to_db()
-        backend.save_screenshot()
-        backend.send_email()
-        return html
+        is_captcha_success = backend.verify_captcha()
+        if is_captcha_success:
+            backend.write_to_db()
+            backend.save_screenshot()
+            backend.send_email()
+            return success_html
+        elif not is_captcha_success:
+            return '<b>Captcha failed.</b>'
+        else:
+            cherrypy.log('Unexpected error.')
+            return '<b>Something went wrong.</b>'
 
 
 class Backend:
@@ -53,6 +62,7 @@ class Backend:
         self.new_screenshot_filename = 'screenshot_'+cur_time.strftime("%Y-%m-%d_%H-%M-%S")+screenshot_file_extension
         self.screenshot_file_path = os.path.normpath(os.path.join(uploading_dir, self.new_screenshot_filename))
         self.client_ip_addr = client_ip_addr
+        self.recaptcha_token = form_data['g-recaptcha-response']
 
     def write_to_db(self):
         values = (self.name, self.email, self.ran_commands, self.produced_output,
@@ -125,6 +135,13 @@ class Backend:
                 cherrypy.log(f"Error: unable to send email.\n{e}\nReturns code is {pipe.returncode}.")
         else:
             cherrypy.log("Unable to send email. Please set smtp credentials in the config.")
+
+    def verify_captcha(self) -> bool:
+        url = 'https://www.google.com/recaptcha/api/siteverify'
+        data = {'secret': RECAPTCHA_SECRET,
+                'response': self.recaptcha_token}
+        response = requests.post(url, data=data)
+        return response.json()['success']
 
 
 if __name__ == '__main__':

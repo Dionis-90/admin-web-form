@@ -16,3 +16,6 @@ ADMIN_EMAIL = 'admin@example.com'  # Who will receive emails form this form.
 SCREENSHOTS_DIR = 'screenshots/'  # With '/' on the end!
 PATH_TO_DB = 'db.sqlite'
 PATH_TO_APP_CONFIG = 'form.conf'
+
+RECAPTCHA_SITE_KEY = ''
+RECAPTCHA_SECRET = ''
