@@ -78,7 +78,7 @@ class Backend:
         cherrypy.log(f"File uploaded as {self.new_screenshot_filename}, size: {size}, "
                      f"type: {self.screenshot.content_type}.")
 
-    def send_email(self):
+    def send_email(self):  # TODO: creating message by email.message module, file attachment none required.
         def generate_marker(length):
             characters = string.ascii_letters+string.digits
             email_marker = ''.join(random.choice(characters) for _ in range(length))
@@ -109,6 +109,7 @@ class Backend:
                     smtp = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
                 smtp.login(SMTP_USER, SMTP_PASSWORD)
                 smtp.sendmail(SMTP_USER, ADMIN_EMAIL, message.encode('utf-8'))
+                smtp.quit()
                 cherrypy.log("Email sent successfully.")
             except smtplib.SMTPException as e:
                 cherrypy.log(f"Error: unable to send email.\n{e}")
